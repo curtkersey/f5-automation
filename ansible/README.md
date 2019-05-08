@@ -32,5 +32,4 @@ One way to show how ansible works with BIG-IP:
 
    ==> Look at BIG-IP, and virtual server is now gone
 
---
-Another way to show this is by using the playbook 
+
