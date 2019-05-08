@@ -1,0 +1,10 @@
+---
+
+# sample file to make sure ansible is working correctly
+#  --to run: ansible-playbook helloworld.yaml
+
+- hosts: localhost
+
+  tasks:
+   - name: Say Hello World
+     command: echo 'hellow world'

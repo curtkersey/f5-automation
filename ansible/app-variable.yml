@@ -1,0 +1,85 @@
+---
+
+# to run: ansible-playbook -v app-variable.yaml -e vsname="app3_vs" -e vsip="1.1.1.1" -e plname="app3_pool" -e pmport="80" -e pmhost1="2.2.2.2" -e pmhost2="2.2.2.3"
+# to delete ansible-playbook -v app-variable.yaml -e vsname="app3_vs" -e vsip="1.1.1.1" -e plname="app3_pool" -e pmport="80" -e pmhost1="2.2.2.2" -e pmhost2="2.2.2.3" -e state="absent"
+
+
+- name: "Imperative: Create new web app"
+  hosts: localhost
+  gather_facts: False
+  connection: local
+
+  vars:
+    provider:
+      password: admin
+      server: 10.1.1.8
+      user: admin
+      validate_certs: no
+      server_port: 443
+
+    vsname: "app2_vs"
+    vsip: "10.1.10.20"
+    vsport: "443"
+    plname: "app2_pl"
+    pmport: "80"
+    pmhost1: "10.1.20.13"
+    pmhost2: "10.1.20.14"
+    state: "present"
+
+  #environment: "{{ bigip_env }}"
+
+  tasks:
+    - name: Adjust virtual server
+      bigip_virtual_server:
+        provider: "{{ provider }}"
+        name: "{{ vsname }}"
+        destination: "{{ vsip }}"
+        port: "{{ vsport }}"
+        description: "Web App"
+        snat: "Automap"
+        all_profiles:
+          - "tcp-lan-optimized"
+          - "clientssl"
+          - "http"
+          - "analytics"
+        state: "{{ state }}"
+
+    - name: Adjust a pool
+      bigip_pool:
+        provider: "{{ provider }}"
+        name: "{{ plname }}"
+        monitors: "/Common/http"
+        monitor_type: "and_list"
+        slow_ramp_time: "120"
+        lb_method: "ratio-member"
+        state: "{{ state }}"
+
+    - name: Create nodes
+      bigip_node:
+        provider: "{{ provider }}"
+        name: "{{ item.name }}"
+        host: "{{ item.host }}"
+        state: "{{ state }}"
+      loop:
+        - { name: "{{ pmhost1 }}", host: "{{ pmhost1 }}" }
+        - { name: "{{ pmhost2 }}", host: "{{ pmhost2 }}" }
+
+    - name: Add nodes to pool
+      bigip_pool_member:
+        provider: "{{ provider }}"
+        host: "{{ item.host }}"
+        port: "{{ pmport }}"
+        pool: "{{ plname }}"
+        state: "{{ state }}"
+      loop:
+        - { host: "{{ pmhost1 }}" }
+        - { host: "{{ pmhost2 }}" }
+      when: state == "present"
+
+    - name: Update a VS
+      bigip_virtual_server:
+        provider: "{{ provider }}"
+        name: "{{ vsname }}"
+        pool: "{{ plname }}"
+        state: "{{ state }}"
+      when: state == "present"
