@@ -1,15 +1,15 @@
 ---
 
 - name: "Imperative: Create new web app"
-  hosts: localhost
+  hosts: bigip
   gather_facts: False
   connection: local
 
   vars:
     provider:
-      password: admin
-      server: 10.1.1.8
+      server: 10.1.1.4
       user: admin
+      password: admin
       validate_certs: no
       server_port: 443
 
