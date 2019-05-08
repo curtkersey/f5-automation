@@ -2,9 +2,9 @@ These playbooks currently assume that the BIG-IP is at IP address 10.1.1.4
 
 One way to show how ansible works with BIG-IP:
 
-1. Create application by running the create-app.yml playbook
+1. Create application by running the app.yml playbook
 
-   # ansible-playbook -i inventory/hosts playbooks/create-app.yml
+   # ansible-playbook -i inventory/hosts playbooks/app.yml
 
    => creates Virtual server named "app2_vs" that has pool named "app2_pl" and two pool members: 10.1.20.13, 10.1.20.14
 
@@ -28,7 +28,7 @@ One way to show how ansible works with BIG-IP:
 
 5. Delete the app:
 
-   # ansible-playbook -i inventory/hosts playbooks/create-app.yml -e state="absent"
+   # ansible-playbook -i inventory/hosts playbooks/app.yml -e state="absent"
 
    ==> Look at BIG-IP, and virtual server is now gone
 

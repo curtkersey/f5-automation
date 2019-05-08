@@ -1,14 +1,14 @@
 ---
 
 - name: "Pool member state"
-  hosts: localhost
+  hosts: bigip
   gather_facts: False
   connection: local
 
   vars:
     provider:
+      server: 10.1.1.4
       password: admin
-      server: 10.1.1.8
       user: admin
       validate_certs: no
       server_port: 443
@@ -26,6 +26,6 @@
         address: "{{ pm_ipaddr }}"
         port: "{{ pm_port }}"
         pool: "{{ pool_name }}"
-	  delegate_to: localhost
+        #delegate_to: localhost
 
  
