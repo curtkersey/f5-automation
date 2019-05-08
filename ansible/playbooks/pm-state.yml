@@ -1,0 +1,31 @@
+---
+
+- name: "Pool member state"
+  hosts: localhost
+  gather_facts: False
+  connection: local
+
+  vars:
+    provider:
+      password: admin
+      server: 10.1.1.8
+      user: admin
+      validate_certs: no
+      server_port: 443
+
+    pool_name: ""
+    pm_ipaddr: ""
+    pm_port: ""
+    pm_state: ""
+
+  tasks:
+    - name: Modify pool member state
+      bigip_pool_member:
+        provider: "{{ provider }}"
+        state: "{{ pm_state }}"
+        address: "{{ pm_ipaddr }}"
+        port: "{{ pm_port }}"
+        pool: "{{ pool_name }}"
+	  delegate_to: localhost
+
+ 
