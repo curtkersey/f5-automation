@@ -1,0 +1,467 @@
+{
+	"info": {
+		"_postman_id": "e0b9a6b6-65fc-4ed8-be71-52b49e4562c4",
+		"name": "TelemetryStreamingLab",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Verify Installation",
+			"item": [
+				{
+					"name": "Get AS3 RPM Package",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "AgilityIsFun123!",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://10.1.1.9/mgmt/shared/appsvcs/info",
+							"protocol": "https",
+							"host": [
+								"10",
+								"1",
+								"1",
+								"9"
+							],
+							"path": [
+								"mgmt",
+								"shared",
+								"appsvcs",
+								"info"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get TS RPM Package",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "AgilityIsFun123!",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://10.1.1.9/mgmt/shared/telemetry/info",
+							"protocol": "https",
+							"host": [
+								"10",
+								"1",
+								"1",
+								"9"
+							],
+							"path": [
+								"mgmt",
+								"shared",
+								"telemetry",
+								"info"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Deploy Application",
+			"item": [
+				{
+					"name": "Create Application via AS3",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "AgilityIsFun123!",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"class\": \"ADC\",\r\n    \"schemaVersion\": \"3.10.0\",\r\n    \"remark\": \"BIG-IP module log profiles\",\r\n    \"Common\": {\r\n        \"Shared\": {\r\n            \"class\": \"Application\",\r\n            \"template\": \"shared\",\r\n            \"telemetry_local_rule\": {\r\n                \"remark\": \"Only required when TS is a local listener\",\r\n                \"class\": \"iRule\",\r\n                \"iRule\": \"when CLIENT_ACCEPTED {\\n  node 127.0.0.1 6514\\n}\"\r\n            },\r\n            \"telemetry_local\": {\r\n                \"remark\": \"Only required when TS is a local listener\",\r\n                \"class\": \"Service_TCP\",\r\n                \"virtualAddresses\": [\r\n                    \"10.1.1.9\"\r\n                ],\r\n                \"virtualPort\": 6514,\r\n                \"iRules\": [\r\n                    \"telemetry_local_rule\"\r\n                ]\r\n            },\r\n                \"opencart_vs\": {\r\n                   \"profileTrafficLog\": { \"use\": \"telemetry_traffic_log_profile\"},\r\n                    \"class\": \"Service_HTTP\",\r\n                    \"virtualAddresses\": [\r\n                        \"10.1.10.5\"\r\n                    ],\r\n                    \"pool\": \"opencart_server\"\r\n                    },\r\n                    \"opencart_server\": {\r\n                        \"class\": \"Pool\",\r\n                        \"monitors\": [\r\n                            \"http\"\r\n                        ],\r\n                        \"members\": [\r\n                            {\r\n                                \"servicePort\": 80,\r\n                                \"serverAddresses\": [\r\n                                    \"10.1.20.20\"\r\n                                ]\r\n                            }\r\n                        ]\r\n            },\r\n            \"telemetry\": {\r\n                \"class\": \"Pool\",\r\n                \"members\": [\r\n                    {\r\n                        \"enable\": true,\r\n                        \"serverAddresses\": [\r\n                            \"10.1.1.9\"\r\n                        ],\r\n                        \"servicePort\": 6514\r\n                    }\r\n                ],\r\n                \"monitors\": [\r\n                    {\r\n                        \"bigip\": \"/Common/tcp\"\r\n                    }\r\n                ]\r\n            },\r\n            \"telemetry_hsl\": {\r\n                \"class\": \"Log_Destination\",\r\n                \"type\": \"remote-high-speed-log\",\r\n                \"protocol\": \"tcp\",\r\n                \"pool\": {\r\n                    \"use\": \"telemetry\"\r\n                }\r\n            },\r\n            \"telemetry_formatted\": {\r\n                \"class\": \"Log_Destination\",\r\n                \"type\": \"splunk\",\r\n                \"forwardTo\": {\r\n                    \"use\": \"telemetry_hsl\"\r\n                }\r\n            },\r\n            \"telemetry_publisher\": {\r\n                \"class\": \"Log_Publisher\",\r\n                \"destinations\": [\r\n                    {\r\n                        \"use\": \"telemetry_formatted\"\r\n                    }\r\n                ]\r\n            },\r\n            \"telemetry_traffic_log_profile\": {\r\n                \"class\": \"Traffic_Log_Profile\",\r\n                \"requestSettings\": {\r\n                    \"requestEnabled\": true,\r\n                    \"requestProtocol\": \"mds-tcp\",\r\n                    \"requestPool\": {\r\n                        \"use\": \"telemetry\"\r\n                    },\r\n                    \"requestTemplate\": \"event_source=\\\"request_logging\\\",hostname=\\\"$BIGIP_HOSTNAME\\\",client_ip=\\\"$CLIENT_IP\\\",server_ip=\\\"$SERVER_IP\\\",http_method=\\\"$HTTP_METHOD\\\",http_uri=\\\"$HTTP_URI\\\"\"\r\n                },\r\n                \"responseSettings\": {\r\n                    \"responseEnabled\": true,\r\n                    \"responseProtocol\": \"mds-tcp\",\r\n                    \"responsePool\": {\r\n                        \"use\": \"telemetry\"\r\n                    },\r\n                    \"responseTemplate\": \"event_source=\\\"response_logging\\\",hostname=\\\"$BIGIP_HOSTNAME\\\",client_ip=\\\"$CLIENT_IP\\\",server_ip=\\\"$SERVER_IP\\\",http_method=\\\"$HTTP_METHOD\\\",http_uri=\\\"$HTTP_URI\\\",virtual_name=\\\"$VIRTUAL_NAME\\\",event_timestamp=\\\"$DATE_HTTP\\\",http_code=\\\"$HTTP_STATCODE\\\",response_time=\\\"$RESPONSE_MSECS\\\",response_size=\\\"$RESPONSE_SIZE\\\"\"\r\n                }\r\n            }\r\n        }\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://10.1.1.9/mgmt/shared/appsvcs/declare",
+							"protocol": "https",
+							"host": [
+								"10",
+								"1",
+								"1",
+								"9"
+							],
+							"path": [
+								"mgmt",
+								"shared",
+								"appsvcs",
+								"declare"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Clear Tenant",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "AgilityIsFun123!",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": " {\r\n    \"class\": \"AS3\",\r\n    \"action\": \"deploy\",\r\n    \"declaration\": {\r\n        \"class\": \"ADC\",\r\n        \"schemaVersion\": \"3.10.0\",\r\n        \"Common\": {\r\n            \"class\": \"Tenant\"        \r\n        }\r\n    }\r\n }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://10.1.1.9/mgmt/shared/appsvcs/declare",
+							"protocol": "https",
+							"host": [
+								"10",
+								"1",
+								"1",
+								"9"
+							],
+							"path": [
+								"mgmt",
+								"shared",
+								"appsvcs",
+								"declare"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Create ElasticSearch Consumer",
+			"item": [
+				{
+					"name": "Create ElasticSearch Database",
+					"item": [
+						{
+							"name": "Create Elastic database",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": "http://10.1.1.5:9200/f5telemetry/",
+									"protocol": "http",
+									"host": [
+										"10",
+										"1",
+										"1",
+										"5"
+									],
+									"port": "9200",
+									"path": [
+										"f5telemetry",
+										""
+									]
+								},
+								"description": "This creates the f5telemetry database index on ELK"
+							},
+							"response": []
+						},
+						{
+							"name": "increase index mapping limit",
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "changeme",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "elastic",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"index.mapping.total_fields.limit\": 5000\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://10.1.1.5:9200/f5telemetry/_settings",
+									"protocol": "http",
+									"host": [
+										"10",
+										"1",
+										"1",
+										"5"
+									],
+									"port": "9200",
+									"path": [
+										"f5telemetry",
+										"_settings"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create Elastic index mapping",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "changeme",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "elastic",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"f5telemetry\": {\r\n        \"properties\": {\r\n            \"data\": {\r\n                \"properties\": {\r\n                    \"application\": {\r\n                        \"type\": \"text\",\r\n                        \"fields\": {\r\n                            \"keyword\": {\r\n                                \"type\": \"keyword\",\r\n                                \"ignore_above\": 256\r\n                            }\r\n                        }\r\n                    },\r\n                    \"client_ip\": {\r\n                        \"type\": \"ip\",\r\n                        \"fields\": {\r\n                            \"keyword\": {\r\n                                \"type\": \"keyword\",\r\n                                \"ignore_above\": 256\r\n                            }\r\n                        }\r\n                    },\r\n                    \"event_source\": {\r\n                        \"type\": \"text\",\r\n                        \"fields\": {\r\n                            \"keyword\": {\r\n                                \"type\": \"keyword\",\r\n                                \"ignore_above\": 256\r\n                            }\r\n                        }\r\n                    },\r\n                    \"event_timestamp\": {\r\n                        \"type\": \"date\"\r\n                    },\r\n                    \"hostname\": {\r\n                        \"type\": \"text\",\r\n                        \"fields\": {\r\n                            \"keyword\": {\r\n                                \"type\": \"keyword\",\r\n                                \"ignore_above\": 256\r\n                            }\r\n                        }\r\n                    },\r\n                    \"http_code\": {\r\n                        \"type\": \"integer\",\r\n                        \"fields\": {\r\n                            \"keyword\": {\r\n                                \"type\": \"keyword\",\r\n                                \"ignore_above\": 256\r\n                            }\r\n                        }\r\n                    },\r\n                    \"http_method\": {\r\n                        \"type\": \"text\",\r\n                        \"fields\": {\r\n                            \"keyword\": {\r\n                                \"type\": \"keyword\",\r\n                                \"ignore_above\": 256\r\n                            }\r\n                        }\r\n                    },\r\n                    \"http_uri\": {\r\n                        \"type\": \"text\",\r\n                        \"fields\": {\r\n                            \"keyword\": {\r\n                                \"type\": \"keyword\",\r\n                                \"ignore_above\": 256\r\n                            }\r\n                        }\r\n                    },\r\n                    \"response_size\": {\r\n                        \"type\": \"integer\",\r\n                        \"fields\": {\r\n                            \"keyword\": {\r\n                                \"type\": \"keyword\",\r\n                                \"ignore_above\": 256\r\n                            }\r\n                        }\r\n                    },\r\n                    \"response_time\": {\r\n                        \"type\": \"integer\",\r\n                        \"fields\": {\r\n                            \"keyword\": {\r\n                                \"type\": \"keyword\",\r\n                                \"ignore_above\": 256\r\n                            }\r\n                        }\r\n                    },\r\n                    \"server_ip\": {\r\n                        \"type\": \"ip\",\r\n                        \"fields\": {\r\n                            \"keyword\": {\r\n                                \"type\": \"keyword\",\r\n                                \"ignore_above\": 256\r\n                            }\r\n                        }\r\n                    },\r\n                    \"tenant\": {\r\n                        \"type\": \"text\",\r\n                        \"fields\": {\r\n                            \"keyword\": {\r\n                                \"type\": \"keyword\",\r\n                                \"ignore_above\": 256\r\n                            }\r\n                        }\r\n                    },\r\n                    \"virtual_name\": {\r\n                        \"type\": \"text\",\r\n                        \"fields\": {\r\n                            \"keyword\": {\r\n                                \"type\": \"keyword\",\r\n                                \"ignore_above\": 256\r\n                            }\r\n                        }\r\n                    }\r\n                }\r\n            },\r\n            \"telemetryEventCategory\": {\r\n                \"type\": \"text\",\r\n                \"fields\": {\r\n                    \"keyword\": {\r\n                        \"type\": \"keyword\",\r\n                        \"ignore_above\": 256\r\n                    }\r\n                }\r\n            }\r\n        }\r\n    }\r\n}\r\n"
+								},
+								"url": {
+									"raw": "http://10.1.1.5:9200/f5telemetry/f5telemetry/_mapping",
+									"protocol": "http",
+									"host": [
+										"10",
+										"1",
+										"1",
+										"5"
+									],
+									"port": "9200",
+									"path": [
+										"f5telemetry",
+										"f5telemetry",
+										"_mapping"
+									]
+								},
+								"description": "This request maps F5 fields to ELK"
+							},
+							"response": []
+						}
+					],
+					"protocolProfileBehavior": {},
+					"_postman_isSubFolder": true
+				},
+				{
+					"name": "ELK Consumer",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "AgilityIsFun123!",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"class\": \"Telemetry\",\r\n    \"My_System\": {\r\n        \"class\": \"Telemetry_System\",\r\n        \"systemPoller\": {\r\n            \"interval\": 60\r\n        }\r\n    },\r\n    \"My_Listener\": {\r\n        \"class\": \"Telemetry_Listener\",\r\n        \"port\": 6514\r\n    },\r\n    \"My_ELK_Consumer\": {\r\n         \"class\": \"Telemetry_Consumer\",\r\n         \"type\": \"ElasticSearch\",\r\n         \"host\": \"10.1.1.5\",\r\n         \"port\": \"9200\",\r\n         \"protocol\": \"http\",\r\n         \"allowSelfSignedCert\": true,\r\n         \"path\": \"\",\r\n         \"index\": \"f5telemetry\",\r\n         \"dataType\": \"f5telemetry\",\r\n         \"apiVersion\": \"6.6\",\r\n         \"username\": \"elastic\",\r\n         \"passphrase\": {\r\n             \"cipherText\": \"changeme\"\r\n         }\r\n     }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://10.1.1.9/mgmt/shared/telemetry/declare",
+							"protocol": "https",
+							"host": [
+								"10",
+								"1",
+								"1",
+								"9"
+							],
+							"path": [
+								"mgmt",
+								"shared",
+								"telemetry",
+								"declare"
+							]
+						},
+						"description": "Configures the ELK consumer on F5 Telemetry Service"
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Create AWS CloudWatch Consumer",
+			"item": [
+				{
+					"name": "AWS Cloudwatch",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "AgilityIsFun123!",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"class\": \"Telemetry\",\r\n    \"My_System\": {\r\n        \"class\": \"Telemetry_System\",\r\n        \"systemPoller\": {\r\n            \"interval\": 60\r\n        }\r\n    },\r\n    \"My_Listener\": {\r\n        \"class\": \"Telemetry_Listener\",\r\n        \"port\": 6514\r\n    },\r\n   \r\n    \"My_Consumer\": {\r\n        \"class\": \"Telemetry_Consumer\",\r\n        \"type\": \"AWS_CloudWatch\",\r\n        \"region\": \"us-west-2\",\r\n        \"logGroup\": \"my_log_group\",\r\n        \"logStream\": \"my_log_stream\",\r\n        \"username\": \"AKIARQJU3TTZGMBYZUW2\",\r\n        \"passphrase\": {\r\n            \"cipherText\": \"23QM+g2nNT54D4/41Tf8eWJfnUKY7xrEK9v4znMG\"\r\n        }\r\n    }\r\n }"
+						},
+						"url": {
+							"raw": "https://10.1.1.9/mgmt/shared/telemetry/declare",
+							"protocol": "https",
+							"host": [
+								"10",
+								"1",
+								"1",
+								"9"
+							],
+							"path": [
+								"mgmt",
+								"shared",
+								"telemetry",
+								"declare"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"protocolProfileBehavior": {}
+}
